@@ -1,0 +1,159 @@
+---
+title: "Map for NYPD 2020"
+author: "Yiming Li"
+output: 
+ html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(gganimate)
+library(lubridate)
+library(plotly)
+library(ggthemes)
+library(forcats)
+library(leaflet)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+NYPD_2020 = 
+  read.csv("../final data/2020data.csv") %>% 
+  janitor::clean_names() 
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+NYPD_2020_day_count = 
+  NYPD_2020 %>% 
+  filter(name_of_borough != "") %>%  
+  group_by(month, day, year) %>% 
+  summarise(count = n()) %>% 
+  mutate(date = str_c(month, day, year, sep = "/")) %>% 
+  mutate(date = mdy(date)) 
+```
+
+## 2020 NYPD cluster sum 
+```{r, message=FALSE,warning=FALSE}
+NYPD_2020_boro = NYPD_2020 %>% 
+  filter(name_of_borough != "") 
+
+leaflet(NYPD_2020_boro) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  setView(lng = -73.935242, lat = 40.730610, zoom = 10) %>% 
+  addMarkers(clusterOptions = markerClusterOptions())
+
+```
+
+From the plot above, we obtained an interactive plot by clustering the geographic locations where the different cases occurred in 2020. We got five clusters and the largest cluster included 302257 cases. The data for this cluster were mainly from Manhattan, Brooklyn and Bronx. In comparison, Staten Island has the least number of cases. These data are consistent with the previous conclusions we got in the data analysis section. If we continued to explore and select the largest clusters we found that most of these cases occurred in Brooklyn and Bronx. By continuously clicking on the clusters we are interested in, we can eventually get the location where exactly each case occurred.
+
+## 2020 NYPD map for five boroughs
+```{r}
+NYPD_2020  %>% 
+  filter(name_of_borough != "") %>% 
+  mutate(text_label = str_c("borough:", name_of_borough)) %>% 
+  plot_ly()  %>% 
+    add_markers(
+    y = ~ latitude,
+    x = ~ longitude,
+    text = ~ text_label,
+    alpha = 0.02,
+    frame = ~ month,
+    mode = "marker",
+    color = ~ name_of_borough,
+  ) %>%
+  animation_opts(transition = 1,frame = 12)
+```
+
+In the previous plot we mainly considered the total number of cases in different regions in 2020. But consider that 2020 is a special year. In this year there was an Covid-19 outbreak, so the active population in all areas of New York City will be reduced for a long time in between. Therefore we wanted to focus on whether the number of cases in each month of the 12 months in 2020 would be different. We therefore looked at the distribution of cases for each month by means of a scatter plot, and we eventually found that there was a significant decrease in the number of cases in April compared to the other months.
+
+## 2020 NYPD day count 
+
+```{r}
+plot = 
+  NYPD_2020_day_count %>% 
+  ggplot(aes(x = date, y = count)) +
+  geom_line(col = "deepskyblue3", size = 1) + 
+  geom_point(col = "deepskyblue3", size = 2) + 
+  labs(title = "Estimated NPYD Count Per Day in 2020",
+       subtitle = "1/1/2020 - 12/31/2020.",
+       x = "day", 
+       y = "Estimated NPYD Xount Per Day") +
+  theme(axis.text.x = element_text(angle = 45)) +
+  transition_reveal(date) 
+
+plot
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+filename = list.files(path = "../data2") 
+pathname = str_c("../data2/", filename)
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+time_count_df = 
+  tibble(
+  filename,
+  data = purrr::map(.x = pathname, ~read_csv(.x)) 
+) %>% 
+  unnest(cols = data) 
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+time_count_df_2016 = 
+  time_count_df %>% 
+  filter(date >= "2016-01-01")
+```
+
+## 2016 - 2020 daily count
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+time_count_df_2016 %>% 
+  ggplot(aes(x = date, y = count, color = name_of_borough)) +
+  geom_point(alpha = 0.05) +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "right")
+```
+
+Considering that observing the distribution of cases did not directly yield the change in the number of cases per day in 2020, we used a new gif line plot to show the change in number. We also set the format as an animation, where the horizontal axis represents the time and the vertical axis represents the number of cases. We found a significant decrease in the number of cases per day around April. In contrast, there was a significant increase in the number of cases per day around June, which may be related to the outbreak and mitigation of Covid-19. We can also saw that the number of cases in April 2020 was indeed significantly lower compared to the previous four years.
+
+## Heatmap for 2020 NYPD 
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+NYPD_2020_weekdays = 
+  NYPD_2020 %>% 
+  mutate(date = str_c(month, day, year, sep = "/")) %>% 
+  mutate(date = mdy(date)) %>% 
+  mutate(dow = wday(date, label = TRUE)) %>% 
+  separate(exact_crime_time, into = c("hour", "minute", "second"), sep = ":") %>% 
+  group_by(dow, hour) %>% 
+  summarise(count = n())
+```
+
+```{r}
+NYPD_2020_weekdays %>%
+  plot_ly(
+    x = ~hour, y = ~dow, z = ~count, type = "heatmap", colors = "BuPu"
+  ) %>%
+  colorbar(title = "2020", x = 1, y = 1) 
+```
+
+In addition to this, we are also interested in whether there is a significant difference in the number of cases occurring at different times of the day, and whether there is a significant difference in the number of cases occurring only on each day of the week. For this purpose we show a heat map of the number of cases in 2020 using a heat map, where darker colors represent a larger number of cases. We can clearly see that there is a clear darker area at 12:00 noon and around 5:00 pm on weekdays. This may be due to the increase in mobile population during lunch time and after work hours. And number of cases decreases significantly after 12:00 am, which may be related to the decrease of mobile population.
+
+

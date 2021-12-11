@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Fiona Li and Wenyu Zhang" />
+
+
+<title>Hypothesis Test</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Home</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Data-resources.html">Data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Data Analysis
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Hypothesis-Test.html">Analysis</a>
+    </li>
+    <li>
+      <a href="Regression-Analysis.html">Regression</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="Plot.html">Visualization</a>
+</li>
+<li>
+  <a href="map.html">Map</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="about.html">Project Report</a>
+</li>
+<li>
+  <a href="mailto:&lt;wz2591@cumc.columbia.edu&gt;">
+    <span class="fa fa-envelope fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/WenyuZhang77/Risky_NYC">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://nypdonline.org/link/1017">
+    <span class="fa fa-ambulance fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Hypothesis Test</h1>
+<h4 class="author">Fiona Li and Wenyu Zhang</h4>
+
+</div>
+
+
+<pre><code>## # A tibble: 6 × 29
+##    ...1 month day    year exact_crime_time precinct_of_crime ky_cd
+##   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;dbl&gt; &lt;time&gt;                       &lt;dbl&gt; &lt;dbl&gt;
+## 1     1 12    22     2020 17:46                           32   101
+## 2     2 09    02     2020 20:40                           70   101
+## 3     3 06    05     2020 00:07                           48   101
+## 4     4 07    20     2020 23:44                           52   101
+## 5     5 07    02     2020 01:07                           44   101
+## 6     6 11    04     2020 09:14                           28   101
+## # … with 22 more variables: description_of_crime &lt;chr&gt;, pd_cd &lt;dbl&gt;,
+## #   pd_desc &lt;chr&gt;, completed_or_not &lt;chr&gt;, level_of_offense &lt;chr&gt;,
+## #   name_of_borough &lt;chr&gt;, description_of_premises &lt;chr&gt;, juris_desc &lt;chr&gt;,
+## #   jurisdiction_code &lt;dbl&gt;, parks_nm &lt;chr&gt;, hadevelopt &lt;chr&gt;,
+## #   susp_age_group &lt;chr&gt;, susp_race &lt;chr&gt;, susp_sex &lt;chr&gt;,
+## #   transit_district &lt;dbl&gt;, latitude &lt;dbl&gt;, longitude &lt;dbl&gt;, lat_lon &lt;chr&gt;,
+## #   station_name &lt;chr&gt;, vic_age_group &lt;chr&gt;, vic_race &lt;chr&gt;, vic_sex &lt;chr&gt;</code></pre>
+<div id="chi-squareed-test-to-test-homogeneity-of-race-and-level-of-offense" class="section level2">
+<h2>Chi-squareed test to test homogeneity of race and level of offense</h2>
+<div id="do-chi-squared-test-to-test-suspect-gender-and-level-of-offense" class="section level3">
+<h3>1. Do chi-squared test to test suspect gender and level of offense</h3>
+<p><span class="math inline">\(H_0\)</span>: there is no association between level of offense and suspect’s gender</p>
+<p><span class="math inline">\(H_1\)</span>: there is association between level of offense and suspect’s gender</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">F</th>
+<th align="right">M</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">FELONY</td>
+<td align="right">9077</td>
+<td align="right">57590</td>
+</tr>
+<tr class="even">
+<td align="left">MISDEMEANOR</td>
+<td align="right">22117</td>
+<td align="right">88087</td>
+</tr>
+<tr class="odd">
+<td align="left">VIOLATION</td>
+<td align="right">17399</td>
+<td align="right">37486</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## 
+##  Pearson&#39;s Chi-squared test
+## 
+## data:  table(dat_clean1$level_of_offense, dat_clean1$susp_sex)
+## X-squared = 6044, df = 2, p-value &lt; 2.2e-16</code></pre>
+<p>Conclusion:</p>
+<p>At significance level 0.05, since p-value &lt; 2.2e-16 &lt; 0.05,we reject the null hypothesis and conclude that there is association between level of offense and suspect’s gender.</p>
+</div>
+<div id="do-chi-squared-test-to-test-suspect-race-and-level-of-offense" class="section level3">
+<h3>2. Do chi-squared test to test suspect race and level of offense</h3>
+<p><span class="math inline">\(H_0\)</span>:there is no association between level of offense and suspect’s race</p>
+<p><span class="math inline">\(H_1\)</span>:there is association between level of offense and suspect’s race</p>
+<table>
+<colgroup>
+<col width="10%" />
+<col width="28%" />
+<col width="22%" />
+<col width="5%" />
+<col width="13%" />
+<col width="5%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">AMERICAN INDIAN/ALASKAN NATIVE</th>
+<th align="right">ASIAN / PACIFIC ISLANDER</th>
+<th align="right">BLACK</th>
+<th align="right">BLACK HISPANIC</th>
+<th align="right">WHITE</th>
+<th align="right">WHITE HISPANIC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">FELONY</td>
+<td align="right">109</td>
+<td align="right">2670</td>
+<td align="right">34826</td>
+<td align="right">4886</td>
+<td align="right">6527</td>
+<td align="right">13819</td>
+</tr>
+<tr class="even">
+<td align="left">MISDEMEANOR</td>
+<td align="right">301</td>
+<td align="right">4810</td>
+<td align="right">53838</td>
+<td align="right">7533</td>
+<td align="right">13910</td>
+<td align="right">24646</td>
+</tr>
+<tr class="odd">
+<td align="left">VIOLATION</td>
+<td align="right">197</td>
+<td align="right">3154</td>
+<td align="right">25189</td>
+<td align="right">3302</td>
+<td align="right">8040</td>
+<td align="right">11324</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## 
+##  Pearson&#39;s Chi-squared test
+## 
+## data:  table(dat_clean2$level_of_offense, dat_clean2$susp_race)
+## X-squared = 1260.1, df = 10, p-value &lt; 2.2e-16</code></pre>
+<p>Conclusion:</p>
+<p>At significance level 0.05, since p-value &lt; 2.2e-16 &lt; 0.05,we reject the null hypothesis and conclude that there is association between level of offense and suspect’s race.</p>
+</div>
+<div id="do-chi-squared-test-to-test-suspect-age-group-and-level-of-offense" class="section level3">
+<h3>3. Do chi-squared test to test suspect age group and level of offense</h3>
+<p><span class="math inline">\(H_0\)</span>: there is no association between level of offense and suspect’s age group</p>
+<p><span class="math inline">\(H_1\)</span>: there is association between level of offense and suspect’s age group</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">&lt;18</th>
+<th align="right">18-24</th>
+<th align="right">25-44</th>
+<th align="right">45-64</th>
+<th align="right">65+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">FELONY</td>
+<td align="right">2012</td>
+<td align="right">10188</td>
+<td align="right">28689</td>
+<td align="right">8054</td>
+<td align="right">558</td>
+</tr>
+<tr class="even">
+<td align="left">MISDEMEANOR</td>
+<td align="right">2876</td>
+<td align="right">13876</td>
+<td align="right">48715</td>
+<td align="right">15292</td>
+<td align="right">1160</td>
+</tr>
+<tr class="odd">
+<td align="left">VIOLATION</td>
+<td align="right">1575</td>
+<td align="right">5121</td>
+<td align="right">21388</td>
+<td align="right">9809</td>
+<td align="right">1478</td>
+</tr>
+</tbody>
+</table>
+<pre><code>## 
+##  Pearson&#39;s Chi-squared test
+## 
+## data:  table(dat_clean3$level_of_offense, dat_clean3$susp_age_group)
+## X-squared = 2763.4, df = 8, p-value &lt; 2.2e-16</code></pre>
+<p>Conclusion:</p>
+<p>At significance level 0.05, since p-value &lt; 2.2e-16 &lt; 0.05,we reject the null hypothesis and conclude that there is association between level of offense and suspect’s age group.</p>
+<p>After doing the chi-square to the relationship between suspect age group,suspect gender, suspect race and their level of offense, we could conclude that there do exist relationships, and the relationships are significant. It suggests further regression analysis could be done to describe the specific relationship between suspect age group,suspect gender, suspect race and their level of offense.</p>
+</div>
+</div>
+<div id="anova-test" class="section level2">
+<h2>ANOVA test</h2>
+<pre><code>## # A tibble: 366 × 7
+## # Groups:   month, day [366]
+##    month day   BRONX BROOKLYN MANHATTAN QUEENS `STATEN ISLAND`
+##    &lt;chr&gt; &lt;chr&gt; &lt;int&gt;    &lt;int&gt;     &lt;int&gt;  &lt;int&gt;           &lt;int&gt;
+##  1 01    01      354      527       396    383              70
+##  2 01    02      283      362       343    265              36
+##  3 01    03      273      363       305    267              50
+##  4 01    04      264      314       282    205              46
+##  5 01    05      271      304       254    234              57
+##  6 01    06      271      337       304    190              54
+##  7 01    07      257      337       298    237              61
+##  8 01    08      273      302       316    234              57
+##  9 01    09      278      349       310    235              40
+## 10 01    10      292      386       327    276              56
+## # … with 356 more rows</code></pre>
+<table>
+<caption>crime number in borough</caption>
+<thead>
+<tr class="header">
+<th align="left">name_of_borough</th>
+<th align="right">mean</th>
+<th align="right">standard_error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">BRONX</td>
+<td align="right">243.14754</td>
+<td align="right">33.391248</td>
+</tr>
+<tr class="even">
+<td align="left">BROOKLYN</td>
+<td align="right">318.46721</td>
+<td align="right">46.852351</td>
+</tr>
+<tr class="odd">
+<td align="left">MANHATTAN</td>
+<td align="right">260.32514</td>
+<td align="right">62.403554</td>
+</tr>
+<tr class="even">
+<td align="left">QUEENS</td>
+<td align="right">237.67760</td>
+<td align="right">36.603165</td>
+</tr>
+<tr class="odd">
+<td align="left">STATEN ISLAND</td>
+<td align="right">45.37978</td>
+<td align="right">9.505904</td>
+</tr>
+</tbody>
+</table>
+<p>we want to do ANOVA test for different borough comparsion</p>
+<p><span class="math inline">\(H_0\)</span>: there is no difference of crime number amount means between different boroughs</p>
+<p><span class="math inline">\(H_1\)</span>: at least two crime number amount means of boroughs are not equal</p>
+<pre><code>##                           Df   Sum Sq Mean Sq F value Pr(&gt;F)    
+## factor(name_of_borough)    4 15612623 3903156    2260 &lt;2e-16 ***
+## Residuals               1825  3151584    1727                   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">diff</th>
+<th align="right">lwr</th>
+<th align="right">upr</th>
+<th align="right">p adj</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">BROOKLYN-BRONX</td>
+<td align="right">75.319672</td>
+<td align="right">65.306736</td>
+<td align="right">85.332609</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">MANHATTAN-BRONX</td>
+<td align="right">17.177596</td>
+<td align="right">7.164659</td>
+<td align="right">27.190532</td>
+<td align="right">0.0000003</td>
+</tr>
+<tr class="odd">
+<td align="left">QUEENS-BRONX</td>
+<td align="right">-5.469945</td>
+<td align="right">-15.482882</td>
+<td align="right">4.542991</td>
+<td align="right">0.3851984</td>
+</tr>
+<tr class="even">
+<td align="left">STATEN ISLAND-BRONX</td>
+<td align="right">-197.767760</td>
+<td align="right">-207.780696</td>
+<td align="right">-187.754823</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">MANHATTAN-BROOKLYN</td>
+<td align="right">-58.142077</td>
+<td align="right">-68.155013</td>
+<td align="right">-48.129140</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">QUEENS-BROOKLYN</td>
+<td align="right">-80.789618</td>
+<td align="right">-90.802554</td>
+<td align="right">-70.776681</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">STATEN ISLAND-BROOKLYN</td>
+<td align="right">-273.087432</td>
+<td align="right">-283.100368</td>
+<td align="right">-263.074495</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">QUEENS-MANHATTAN</td>
+<td align="right">-22.647541</td>
+<td align="right">-32.660477</td>
+<td align="right">-12.634605</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">STATEN ISLAND-MANHATTAN</td>
+<td align="right">-214.945355</td>
+<td align="right">-224.958292</td>
+<td align="right">-204.932419</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">STATEN ISLAND-QUEENS</td>
+<td align="right">-192.297814</td>
+<td align="right">-202.310751</td>
+<td align="right">-182.284878</td>
+<td align="right">0.0000000</td>
+</tr>
+</tbody>
+</table>
+<p>Based on the result of ANOVA test, we reject the Null hypothesis at 99% confidence level and conclude that there’s at least two crime number amount means of boroughs are not equal.</p>
+<p>We use Tukey test for pairwise comparison. We notice the p adj for QUEENS-BRONX is 0.3851984, which means their mean values of crime number is very close to each other. Except for QUEENS-BRONX, we discovered that practically all pairs of boroughs have distinct mean crime number amounts since p adj values for the Tukey test are equal to 0. We are 99 percent certain that the crime rate in BROOKLYN differs from that in other administrative regions. BROOKLYN has the highest crime rate when compared to other administrative regions. When we’re in Brooklyn, we might want to be cautious.</p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

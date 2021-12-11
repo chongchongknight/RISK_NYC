@@ -1,0 +1,185 @@
+---
+title: 'Hypothesis Test'
+author: "Fiona Li and Wenyu Zhang"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+```{r, include=FALSE}
+library(tidyverse)
+library(rvest)
+library(httr)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+dat = read_csv("../final data/2020data.csv")
+head(dat)
+```
+
+## Chi-squareed test to test homogeneity of race and level of offense
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+dat_clean =
+  dat %>%
+  filter(!(susp_race == ""),
+         !(susp_race == "UNKNOWN")) %>%
+  mutate(level_of_offense = as.factor(level_of_offense)) %>%
+  mutate(susp_race = as.factor(susp_race)) %>%
+  group_by(susp_race,level_of_offense) %>%
+  summarise(n_obs = n()) %>%
+  pivot_wider(
+  names_from = "susp_race", 
+  values_from = "n_obs")
+```
+
+### 1. Do chi-squared test to test suspect gender and level of offense
+
+$H_0$: there is no association between level of offense and suspect’s gender
+
+$H_1$: there is association between level of offense and suspect’s gender
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+dat_clean1 =
+  dat %>%
+  filter(!(susp_sex == ""),
+         !(susp_sex == "UNKNOWN"),
+         !(susp_sex == "U")) %>%
+  mutate(level_of_offense = as.factor(level_of_offense)) %>%
+  mutate(susp_race = as.factor(susp_sex))
+
+table(dat_clean1$level_of_offense, dat_clean1$susp_sex) %>% 
+  knitr::kable(digits = 3)
+chisq.test(table(dat_clean1$level_of_offense, dat_clean1$susp_sex), correct = F) 
+```
+
+Conclusion:
+
+At significance level 0.05, since p-value < 2.2e-16 < 0.05,we reject the null hypothesis and conclude that there is association between level of offense and suspect’s gender.
+
+### 2. Do chi-squared test to test suspect race and level of offense
+
+$H_0$:there is no association between level of offense and suspect’s race
+
+$H_1$:there is association between level of offense and suspect’s race
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+dat_clean2 =
+  dat %>%
+  filter(!(susp_race == ""),
+         !(susp_race == "UNKNOWN")) %>%
+  mutate(level_of_offense = as.factor(level_of_offense)) %>%
+  mutate(susp_race = as.factor(susp_race))
+
+table(dat_clean2$level_of_offense, dat_clean2$susp_race) %>% 
+  knitr::kable(digits = 3)
+chisq.test(table(dat_clean2$level_of_offense, dat_clean2$susp_race), correct = F) 
+
+```
+
+Conclusion:
+
+At significance level 0.05, since p-value < 2.2e-16 < 0.05,we reject the null hypothesis and conclude that there is association between level of offense and suspect’s race.
+
+### 3. Do chi-squared test to test suspect age group and level of offense
+
+$H_0$: there is no association between level of offense and suspect’s age group
+
+$H_1$: there is association between level of offense and suspect’s age group
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+dat_clean3 =
+  dat %>%
+  filter(!(susp_age_group == ""),
+         !(susp_age_group == "UNKNOWN")) %>%
+  filter((susp_age_group == "25-44") | (susp_age_group == "45-64") | (susp_age_group == "18-24") | (susp_age_group == "65+") | (susp_age_group == "<18")) %>%
+  mutate(level_of_offense = as.factor(level_of_offense)) %>%
+  mutate(susp_race = as.factor(susp_age_group))
+
+table(dat_clean3$level_of_offense, dat_clean3$susp_age_group) %>% 
+  knitr::kable(digits = 3)
+chisq.test(table(dat_clean3$level_of_offense, dat_clean3$susp_age_group), correct = F) 
+```
+
+Conclusion:
+
+At significance level 0.05, since p-value < 2.2e-16 < 0.05,we reject the null hypothesis and conclude that there is association between level of offense and suspect’s age group.
+
+After doing the chi-square to the relationship between suspect age group,suspect gender, suspect race and their level of offense, we could conclude that there do exist relationships, and the relationships are significant. It suggests further regression analysis could be done to describe the specific relationship between suspect age group,suspect gender, suspect race and their level of offense.
+
+
+## ANOVA test
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+wenyudata = 
+  dat %>% 
+  group_by(month, day, name_of_borough) %>% 
+  select(completed_or_not, name_of_borough) %>% 
+  filter(name_of_borough != "") %>% 
+  summarise(count = n()) %>% 
+  arrange(month,day) 
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+wenyudata %>% 
+  pivot_wider(names_from = name_of_borough,
+              values_from = count) 
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+wenyudata %>% 
+  select(name_of_borough, count) %>% 
+  group_by(name_of_borough) %>% 
+  summarise(mean = mean(count),
+            standard_error = sd(count)) %>% 
+  knitr::kable(caption = "crime number in borough")
+```
+
+we want to do ANOVA test for different borough comparsion
+
+$H_0$: there is no difference of crime number amount means between different boroughs
+
+$H_1$: at least two crime number amount means of boroughs are not equal
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+crime_total = 
+  wenyudata %>% 
+  select(name_of_borough, count) %>% 
+  group_by(name_of_borough)
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+aov_boro_number = 
+  aov(count ~factor(name_of_borough), data = crime_total)
+
+summary(aov_boro_number)
+```
+
+```{r, echo = FALSE, message=FALSE,warning = FALSE}
+Tukey_comp =
+  TukeyHSD(aov_boro_number, conf.level = 0.99)
+
+Tukey_comp $ `factor(name_of_borough)` %>% 
+  knitr::kable()
+```
+
+Based on the result of ANOVA test, we reject the Null hypothesis at 99% confidence level and conclude that there’s at least two crime number amount means of boroughs are not equal.
+
+We use Tukey test for pairwise comparison. We notice the p adj for QUEENS-BRONX is 0.3851984, which means their mean values of crime number is very close to each other. Except for QUEENS-BRONX, we discovered that practically all pairs of boroughs have distinct mean crime number amounts since p adj values for the Tukey test are equal to 0. We are 99 percent certain that the crime rate in BROOKLYN differs from that in other administrative regions. BROOKLYN has the highest crime rate when compared to other administrative regions. When we're in Brooklyn, we might want to be cautious.
+

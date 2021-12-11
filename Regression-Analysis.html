@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Wenyu Zhang" />
+
+
+<title>Regression Analysis</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Home</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Data-resources.html">Data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Data Analysis
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Hypothesis-Test.html">Analysis</a>
+    </li>
+    <li>
+      <a href="Regression-Analysis.html">Regression</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="Plot.html">Visualization</a>
+</li>
+<li>
+  <a href="map.html">Map</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="about.html">Project Report</a>
+</li>
+<li>
+  <a href="mailto:&lt;wz2591@cumc.columbia.edu&gt;">
+    <span class="fa fa-envelope fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/WenyuZhang77/Risky_NYC">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://nypdonline.org/link/1017">
+    <span class="fa fa-ambulance fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Regression Analysis</h1>
+<h4 class="author">Wenyu Zhang</h4>
+<h4 class="date">12/9/2021</h4>
+
+</div>
+
+
+<pre class="r"><code>dat = read_csv(&quot;../final data/2020data.csv&quot;)</code></pre>
+<div id="clean-and-summary-data" class="section level2">
+<h2>Clean and summary data</h2>
+<div id="clean-regression" class="section level3">
+<h3>1. Clean regression</h3>
+<pre class="r"><code>## regression
+clean_regression =
+  dat %&gt;%
+  filter(!(susp_age_group == &quot;&quot;),
+         !(susp_race == &quot;&quot;),
+         !(susp_sex == &quot;&quot;),
+         !(name_of_borough == &quot;&quot;)) %&gt;%
+  filter(!(susp_age_group == &quot;UNKNOWN&quot;),
+         !(susp_race == &quot;UNKNOWN&quot;),
+         !(susp_sex == &quot;UNKNOWN&quot;),
+         !(susp_sex == &quot;U&quot;)) %&gt;%
+  filter((susp_age_group == &quot;25-44&quot;) | (susp_age_group == &quot;45-64&quot;) | (susp_age_group == &quot;18-24&quot;) | (susp_age_group == &quot;65+&quot;) | (susp_age_group == &quot;&lt;18&quot;)) %&gt;%
+  mutate(level_of_offense = ordered(level_of_offense, 
+                                    levels = c(&quot;VIOLATION&quot;, 
+                                               &quot;MISDEMEANOR&quot;, 
+                                               &quot;FELONY&quot;))) %&gt;%
+  mutate(susp_age_group = as.factor(susp_age_group)) %&gt;%
+  mutate(susp_race = as.factor(susp_race)) %&gt;%
+  mutate(susp_sex = as.factor(susp_sex))
+
+clean_regression</code></pre>
+<pre><code>## # A tibble: 159,934 × 29
+##     ...1 month day    year exact_crime_time precinct_of_crime ky_cd
+##    &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;dbl&gt; &lt;time&gt;                       &lt;dbl&gt; &lt;dbl&gt;
+##  1    19 11    20     2020 17:25                           44   578
+##  2    23 11    16     2020 14:00                           77   578
+##  3    27 11    09     2020 12:44                           47   106
+##  4    31 11    06     2020 12:23                            9   578
+##  5    38 10    05     2020 16:23                           47   352
+##  6    40 10    12     2020 23:58                           43   113
+##  7    44 10    11     2020 22:20                           14   233
+##  8    49 10    13     2020 14:30                           47   106
+##  9    50 09    24     2020 07:20                           77   578
+## 10    51 10    13     2020 21:23                           43   118
+## # … with 159,924 more rows, and 22 more variables: description_of_crime &lt;chr&gt;,
+## #   pd_cd &lt;dbl&gt;, pd_desc &lt;chr&gt;, completed_or_not &lt;chr&gt;, level_of_offense &lt;ord&gt;,
+## #   name_of_borough &lt;chr&gt;, description_of_premises &lt;chr&gt;, juris_desc &lt;chr&gt;,
+## #   jurisdiction_code &lt;dbl&gt;, parks_nm &lt;chr&gt;, hadevelopt &lt;chr&gt;,
+## #   susp_age_group &lt;fct&gt;, susp_race &lt;fct&gt;, susp_sex &lt;fct&gt;,
+## #   transit_district &lt;dbl&gt;, latitude &lt;dbl&gt;, longitude &lt;dbl&gt;, lat_lon &lt;chr&gt;,
+## #   station_name &lt;chr&gt;, vic_age_group &lt;chr&gt;, vic_race &lt;chr&gt;, vic_sex &lt;chr&gt;</code></pre>
+</div>
+<div id="summary-model" class="section level3">
+<h3>2. Summary model</h3>
+<pre class="r"><code># run proportional odds model
+model &lt;- polr(formula = level_of_offense ~ susp_age_group + susp_race + susp_sex + name_of_borough, data = clean_regression)</code></pre>
+<p>When there are more than two outcome categories with an order, proportional odds logistic regression can be utilized. The assumption that no input variable has a disproportionate influence on a certain level of the output variable is a key underlying assumption (McNulty,2021). Since our response variable is level of offense, which contains FELONY, MISDEMEANOR, and VIOLATION, it satisfies “more than two outcome categories (we have 3) with an order (felony is the most severe crime whereas violation is the minor offense)”. Hence, we use proportional odds logistic regression</p>
+</div>
+</div>
+<div id="proportional-odds-logistic-regression" class="section level2">
+<h2>Proportional Odds Logistic Regression</h2>
+<pre class="r"><code># get coefficients (it&#39;s in matrix form)
+coefficients &lt;- summary(model)$coefficients
+
+# calculate p-values
+p_value &lt;- (1 - pnorm(abs(coefficients[ ,&quot;t value&quot;]), 0, 1))*2
+
+# bind back to coefficients
+coefficients &lt;- cbind(coefficients, p_value)
+odds_ratio &lt;- exp(coefficients[ ,&quot;Value&quot;])
+
+# combine with coefficient and p_value
+(coefficients &lt;- cbind(
+  coefficients[ ,c(&quot;Value&quot;, &quot;p_value&quot;)],
+  odds_ratio
+)) %&gt;% 
+  knitr::kable(digits = 3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Value</th>
+<th align="right">p_value</th>
+<th align="right">odds_ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">susp_age_group18-24</td>
+<td align="right">0.256</td>
+<td align="right">0.000</td>
+<td align="right">1.292</td>
+</tr>
+<tr class="even">
+<td align="left">susp_age_group25-44</td>
+<td align="right">-0.008</td>
+<td align="right">0.758</td>
+<td align="right">0.992</td>
+</tr>
+<tr class="odd">
+<td align="left">susp_age_group45-64</td>
+<td align="right">-0.317</td>
+<td align="right">0.000</td>
+<td align="right">0.729</td>
+</tr>
+<tr class="even">
+<td align="left">susp_age_group65+</td>
+<td align="right">-0.925</td>
+<td align="right">0.000</td>
+<td align="right">0.396</td>
+</tr>
+<tr class="odd">
+<td align="left">susp_raceASIAN / PACIFIC ISLANDER</td>
+<td align="right">0.323</td>
+<td align="right">0.000</td>
+<td align="right">1.381</td>
+</tr>
+<tr class="even">
+<td align="left">susp_raceBLACK</td>
+<td align="right">0.585</td>
+<td align="right">0.000</td>
+<td align="right">1.796</td>
+</tr>
+<tr class="odd">
+<td align="left">susp_raceBLACK HISPANIC</td>
+<td align="right">0.624</td>
+<td align="right">0.000</td>
+<td align="right">1.867</td>
+</tr>
+<tr class="even">
+<td align="left">susp_raceWHITE</td>
+<td align="right">0.286</td>
+<td align="right">0.001</td>
+<td align="right">1.331</td>
+</tr>
+<tr class="odd">
+<td align="left">susp_raceWHITE HISPANIC</td>
+<td align="right">0.500</td>
+<td align="right">0.000</td>
+<td align="right">1.649</td>
+</tr>
+<tr class="even">
+<td align="left">susp_sexM</td>
+<td align="right">0.627</td>
+<td align="right">0.000</td>
+<td align="right">1.873</td>
+</tr>
+<tr class="odd">
+<td align="left">name_of_boroughBROOKLYN</td>
+<td align="right">0.115</td>
+<td align="right">0.000</td>
+<td align="right">1.122</td>
+</tr>
+<tr class="even">
+<td align="left">name_of_boroughMANHATTAN</td>
+<td align="right">0.180</td>
+<td align="right">0.000</td>
+<td align="right">1.197</td>
+</tr>
+<tr class="odd">
+<td align="left">name_of_boroughQUEENS</td>
+<td align="right">0.091</td>
+<td align="right">0.000</td>
+<td align="right">1.096</td>
+</tr>
+<tr class="even">
+<td align="left">name_of_boroughSTATEN ISLAND</td>
+<td align="right">0.019</td>
+<td align="right">0.447</td>
+<td align="right">1.020</td>
+</tr>
+<tr class="odd">
+<td align="left">VIOLATION|MISDEMEANOR</td>
+<td align="right">-0.203</td>
+<td align="right">0.028</td>
+<td align="right">0.816</td>
+</tr>
+<tr class="even">
+<td align="left">MISDEMEANOR|FELONY</td>
+<td align="right">1.982</td>
+<td align="right">0.000</td>
+<td align="right">7.256</td>
+</tr>
+</tbody>
+</table>
+<div id="interpretation" class="section level3">
+<h3>Interpretation</h3>
+<p>Male suspect have approximately 87% higher odds of greater level of offense compared to Female suspect.</p>
+<p>Suspect who in age group 18-24 have the highest odds ratio among all age groups, that is approximately 29% higher odds of greater level of offense compared to suspect under age 18.</p>
+<p>Suspect who are black hispanic have the highest odds ratio among all race groups, that is approximately 86.69% higher odds of greater level of offense compared to suspect that are American Indian/Alaskan native.</p>
+<p>The borough Manhattan have the highest odds ratio among all boroughs, that is approximately 19.69% higher odds of greater level of offense compared to Bronx.</p>
+</div>
+</div>
+<div id="why-not-use-simple-linear-regression" class="section level2">
+<h2>Why not use simple linear regression?</h2>
+<p>Simple linear regression is Analysis with Continuous Dependent Variables. However, since all of our variable are categorical, it is not our best choice. If we treat the outcome as a continuous variable and perform simple linear regression, we might get radically erroneous results. In common with linear regression, we can consider our outcome to increase or decrease dependent on our inputs. However, unlike linear regression the increase and decrease is ‘stepwise’ rather than continuous, and we do not know that the difference between the steps is the same across the scale (McNulty,2021). In our case, the difference between VIOLATION and MISDEMEANOR and the difference between MISDEMEANOR and FELONY may not be equivalent.</p>
+</div>
+<div id="reference" class="section level2">
+<h2>Reference</h2>
+<p>McNulty, K. (2021). Handbook of Regression Modeling in People Analytics: With Examples in R and Python. Retrieved 10 December 2021, from <a href="https://peopleanalytics-regression-book.org/ord-reg.html" class="uri">https://peopleanalytics-regression-book.org/ord-reg.html</a></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

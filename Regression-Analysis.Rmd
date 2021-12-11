@@ -1,0 +1,112 @@
+---
+title: "Regression Analysis"
+author: "Wenyu Zhang"
+date: "12/9/2021"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(rvest)
+library(httr)
+library(patchwork)
+library(MASS)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+```{r, message=FALSE}
+dat = read_csv("../final data/2020data.csv")
+```
+
+## Clean and summary data
+
+### 1. Clean regression
+```{r}
+## regression
+clean_regression =
+  dat %>%
+  filter(!(susp_age_group == ""),
+         !(susp_race == ""),
+         !(susp_sex == ""),
+         !(name_of_borough == "")) %>%
+  filter(!(susp_age_group == "UNKNOWN"),
+         !(susp_race == "UNKNOWN"),
+         !(susp_sex == "UNKNOWN"),
+         !(susp_sex == "U")) %>%
+  filter((susp_age_group == "25-44") | (susp_age_group == "45-64") | (susp_age_group == "18-24") | (susp_age_group == "65+") | (susp_age_group == "<18")) %>%
+  mutate(level_of_offense = ordered(level_of_offense, 
+                                    levels = c("VIOLATION", 
+                                               "MISDEMEANOR", 
+                                               "FELONY"))) %>%
+  mutate(susp_age_group = as.factor(susp_age_group)) %>%
+  mutate(susp_race = as.factor(susp_race)) %>%
+  mutate(susp_sex = as.factor(susp_sex))
+
+clean_regression
+```
+
+### 2. Summary model
+```{r, message=FALSE}
+# run proportional odds model
+model <- polr(formula = level_of_offense ~ susp_age_group + susp_race + susp_sex + name_of_borough, data = clean_regression)
+
+```
+
+When there are more than two outcome categories with an order, proportional odds logistic regression can be utilized. The assumption that no input variable has a disproportionate influence on a certain level of the output variable is a key underlying assumption (McNulty,2021). Since our response variable is level of offense, which contains FELONY, MISDEMEANOR, and VIOLATION, it satisfies “more than two outcome categories (we have 3) with an order (felony is the most severe crime whereas violation is the minor offense)”. Hence, we use proportional odds logistic regression
+
+## Proportional Odds Logistic Regression
+
+```{r, message=FALSE}
+# get coefficients (it's in matrix form)
+coefficients <- summary(model)$coefficients
+
+# calculate p-values
+p_value <- (1 - pnorm(abs(coefficients[ ,"t value"]), 0, 1))*2
+
+# bind back to coefficients
+coefficients <- cbind(coefficients, p_value)
+odds_ratio <- exp(coefficients[ ,"Value"])
+
+# combine with coefficient and p_value
+(coefficients <- cbind(
+  coefficients[ ,c("Value", "p_value")],
+  odds_ratio
+)) %>% 
+  knitr::kable(digits = 3)
+```
+
+### Interpretation
+
+Male suspect have approximately 87% higher odds of greater level of offense compared to Female suspect.
+
+Suspect who in age group 18-24 have the highest odds ratio among all age groups, that is approximately 29% higher odds of greater level of offense compared to suspect under age 18.
+
+Suspect who are black hispanic have the highest odds ratio among all race groups, that is approximately 86.69% higher odds of greater level of offense compared to suspect that are American Indian/Alaskan native.
+
+The borough Manhattan have the highest odds ratio among all boroughs, that is approximately 19.69% higher odds of greater level of offense compared to Bronx.
+
+## Why not use simple linear regression?
+
+Simple linear regression is Analysis with Continuous Dependent Variables. However, since all of our variable are categorical, it is not our best choice. If we treat the outcome as a continuous variable and perform simple linear regression, we might get radically erroneous results. In common with linear regression, we can consider our outcome to increase or decrease dependent on our inputs. However, unlike linear regression the increase and decrease is ‘stepwise’ rather than continuous, and we do not know that the difference between the steps is the same across the scale (McNulty,2021). In our case, the difference between VIOLATION and MISDEMEANOR and the difference between MISDEMEANOR and FELONY may not be equivalent.  
+
+
+## Reference
+
+McNulty, K. (2021). Handbook of Regression Modeling in People Analytics: With Examples in R and Python. Retrieved 10 December 2021, from https://peopleanalytics-regression-book.org/ord-reg.html

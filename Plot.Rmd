@@ -1,0 +1,464 @@
+---
+title: "Plot"
+author: "Shiwei Chen"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(rvest)
+library(httr)
+library(gganimate)
+library(gifski)
+library(png)
+library(plotly)
+library(ggplot2)
+library(readr)
+library(readxl)
+library(patchwork)
+library(leaflet)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+```{r, include=FALSE}
+# Import and clean data
+df20_tidy = 
+  read_csv("../final data/2020data.csv") %>% 
+  janitor::clean_names() %>%
+  select(-1, -precinct_of_crime, -ky_cd, -description_of_crime, -pd_desc, -pd_cd, -description_of_premises, -juris_desc, -jurisdiction_code, -parks_nm, -hadevelopt, -transit_district, -latitude, -longitude, -lat_lon, -station_name)
+  
+```
+
+
+## Data Explanation
+
+
+
+## Data Visualization
+### Suspect plot{.tabset}
+
+```{r, warning=FALSE, message=FALSE}
+susp_df = df20_tidy %>% 
+  select(susp_age_group, susp_race, susp_sex) %>% 
+  filter(!is.na(.)) %>% 
+  filter(!(susp_age_group == "UNKNOWN"), 
+         !(susp_race == "UNKNOWN"), 
+         !(susp_sex == "UNKNOWN"), 
+         !(susp_sex == "U"))
+
+
+susp_age =
+  susp_df %>% 
+  group_by(susp_age_group) %>% 
+  summarise(count = n()) %>% 
+  filter(susp_age_group == "<18" | susp_age_group == "18-24" | susp_age_group == "25-44" | susp_age_group == "45-64" | susp_age_group == "65+") %>% 
+  ggplot(
+    aes(x = susp_age_group, y = count, color = susp_age_group, fill = susp_age_group)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Age group",
+    y = "Number of people",
+    title = "Total number of people in each age group(Suspect)"
+  )
+
+
+susp_race =
+  susp_df %>% 
+  group_by(susp_race) %>% 
+  summarise(count = n()) %>% 
+  mutate(susp_race = factor(susp_race), 
+         susp_race = fct_reorder(susp_race, count)) %>%
+  ggplot(
+    aes(x = susp_race, y = count, color = susp_race, fill = susp_race)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Race",
+    y = "Number of people",
+    title = "Total number of people for each race(Suspect)"
+  ) +
+  theme(
+      axis.text.x = element_text(angle = 270, vjust = 0.5, hjust = 0.5),
+      legend.position = "none")
+
+susp_sex = 
+  susp_df %>% 
+  group_by(susp_sex) %>% 
+  summarise(count = n()) %>% 
+   ggplot(
+    aes(x = susp_sex, y = count, color = susp_sex, fill = susp_sex)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Sex",
+    y = "Number of people",
+    title = "Total number of people in each sex group(Suspect)"
+  ) 
+
+susp_agexrace = 
+  susp_df %>% 
+  group_by(susp_age_group, susp_race) %>% 
+  summarise(number_of_people = n()) %>% 
+  filter(susp_age_group == "<18" | susp_age_group == "18-24" | susp_age_group == "25-44" | susp_age_group == "45-64" | susp_age_group == "65+") %>% 
+   ggplot(
+    aes(x = susp_age_group, y = number_of_people, color = susp_race, fill = susp_race)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Age group",
+    y = "Number of people",
+    title = "Total number of people in each age group with race(Suspect)"
+  )
+
+
+susp_agexsex = 
+  susp_df %>% 
+  group_by(susp_age_group, susp_sex) %>% 
+  summarise(number_of_people = n()) %>% 
+  filter(susp_age_group == "<18" | susp_age_group == "18-24" | susp_age_group == "25-44" | susp_age_group == "45-64" | susp_age_group == "65+") %>% 
+   ggplot(
+    aes(x = susp_age_group, y = number_of_people, color = susp_sex, fill = susp_sex)
+    ) + 
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Age group",
+    y = "Number of people",
+    title = "Total number of people in each age group with sex(Suspect)"
+  )
+
+susp_racexsex = 
+  susp_df %>% 
+  group_by(susp_race, susp_sex) %>% 
+  summarise(number_of_people = n()) %>%
+  mutate(susp_race = factor(susp_race), 
+         susp_race = fct_reorder(susp_race, number_of_people)) %>%
+  ggplot(
+    aes(x = susp_race, y = number_of_people, color = susp_sex, fill = susp_sex)
+    ) + 
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Race",
+    y = "Number of people",
+    title = "Total number of people for each race with sex(Suspect)"
+  ) +
+  theme(
+      axis.text.x = element_text(angle = 270, vjust = 0.5, hjust = 0.5),
+      legend.position = "none")
+
+```
+
+
+#### Age
+```{r}
+susp_age
+```
+
+
+#### Race
+```{r}
+susp_race
+```
+
+
+#### Sex
+```{r}
+susp_sex
+```
+
+
+#### Age x Race
+```{r}
+susp_agexrace
+```
+
+
+#### Age x Sex
+```{r}
+susp_agexsex
+```
+
+
+#### Race x Sex
+```{r}
+susp_racexsex
+```
+
+
+
+### Victim plot{.tabset}
+```{r, warning=FALSE, message=FALSE}
+vic_df = df20_tidy %>% 
+  select(vic_age_group, vic_race, vic_sex) %>% 
+  filter(!is.na(.)) %>% 
+  filter(!(vic_age_group == "UNKNOWN"), !(vic_race == "UNKNOWN"), !(vic_sex == "UNKNOWN"), !(vic_sex == "U")) %>% 
+  filter(vic_age_group == "<18" | vic_age_group == "18-24" | vic_age_group == "25-44" | vic_age_group == "45-64" | vic_age_group == "65+") %>% 
+  filter(vic_sex == "F" | vic_sex == "M")
+
+
+vic_age =
+  vic_df %>% 
+  group_by(vic_age_group) %>% 
+  summarise(count = n()) %>% 
+   ggplot(
+    aes(x = vic_age_group, y = count, color = vic_age_group, fill = vic_age_group)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Age group",
+    y = "Number of people",
+    title = "Total number of people in each age group(Victim)"
+  )
+vic_race =
+  vic_df %>% 
+  group_by(vic_race) %>% 
+  summarise(count = n()) %>% 
+  mutate(vic_race = factor(vic_race), 
+         vic_race = fct_reorder(vic_race, count)) %>%
+   ggplot(
+    aes(x = vic_race, y = count, color = vic_race, fill = vic_race)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Race",
+    y = "Number of people",
+    title = "Total number of people for each race(Victim)"
+  ) +
+  theme(
+      axis.text.x = element_text(angle = 270, vjust = 0.5, hjust = 0.5),
+      legend.position = "none")
+vic_sex =
+  vic_df %>% 
+  group_by(vic_sex) %>% 
+  summarise(count = n()) %>% 
+  ggplot(
+    aes(x = vic_sex, y = count, color = vic_sex, fill = vic_sex)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Sex",
+    y = "Number of people",
+    title = "Total number of people in each sex group(Victim)"
+  )
+vic_agexrace =
+  vic_df %>% 
+  group_by(vic_age_group, vic_race) %>% 
+  summarise(number_of_people = n()) %>%
+  ggplot(
+    aes(x = vic_age_group, y = number_of_people, color = vic_race, fill = vic_race)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Age group",
+    y = "Number of people",
+    title = "Total number of people in each age group with race(Victim)"
+  )
+vic_agexsex =
+  vic_df %>% 
+  group_by(vic_age_group, vic_sex) %>% 
+  summarise(number_of_people = n()) %>% 
+  ggplot(
+    aes(x = vic_age_group, y = number_of_people, color = vic_sex, fill = vic_sex)
+    ) + 
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Age group",
+    y = "Number of people",
+    title = "Total number of people in each age group with sex(Victim)"
+  )
+vic_racexsex =
+  vic_df %>% 
+  group_by(vic_race, vic_sex) %>% 
+  summarise(number_of_people = n()) %>%
+  ggplot(
+    aes(x = vic_race, y = number_of_people, color = vic_sex, fill = vic_sex)
+    ) + 
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Race",
+    y = "Number of people",
+    title = "Total number of people for each race with sex(Victim)"
+  ) +
+  theme(
+      axis.text.x = element_text(angle = 270, vjust = 0.5, hjust = 0.5),
+      legend.position = "none")
+```
+
+
+#### Age
+```{r}
+vic_age
+```
+
+
+#### Race
+```{r}
+vic_race
+```
+
+
+#### Sex
+```{r}
+vic_sex
+```
+
+
+#### Age x Race
+```{r}
+vic_agexrace
+```
+
+
+#### Age x Sex
+```{r}
+vic_agexsex
+```
+
+
+#### Race x Sex
+```{r}
+vic_racexsex
+```
+
+
+
+### Level of offense{.tabset}
+
+```{r, message=FALSE, warning=FALSE}
+level_of_offense_df = 
+  df20_tidy %>% 
+  select(month, day, year, level_of_offense, name_of_borough, susp_age_group, susp_race, susp_sex) %>% 
+  filter(!is.na(.)) %>% 
+  filter(!(susp_age_group == "UNKNOWN"), 
+         !(susp_race == "UNKNOWN"), 
+         !(susp_sex == "UNKNOWN"), 
+         !(susp_sex == "U"), 
+         !(name_of_borough == " ")) %>%   
+  filter(susp_age_group == "<18" | susp_age_group == "18-24" | susp_age_group == "25-44" | susp_age_group == "45-64" | susp_age_group == "65+")
+```
+
+```{r, message=FALSE, warning=FALSE}
+# 2020 level_of_offense by month,table and gif
+level_of_offense_df %>% 
+  group_by(month, level_of_offense) %>% 
+  summarise(total_activity = n()) %>% 
+  pivot_wider(
+  names_from = "month", 
+  values_from = "total_activity") %>% 
+  knitr::kable()
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Count of offense events in each month
+level_of_offense_df %>%
+  mutate(level_of_offense = as.factor(level_of_offense),
+         month = as.integer(month)) %>% 
+  group_by(month, level_of_offense) %>% 
+  summarise(count = n()) %>%
+  mutate(count = as.double(count)) %>% 
+  ggplot(aes(x = month, y = count, color = level_of_offense)) + 
+  geom_point() + geom_line() +
+  transition_reveal(month) +
+  labs(
+    x = "Month",
+    y = "Count",
+    title = "Count of offense events in each month"
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 2, 4, 6, 8, 10, 12), 
+    labels = c(0, 2, 4, 6, 8, 10, 12)
+  )
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+offense_borough = 
+  level_of_offense_df %>%
+  group_by(name_of_borough, level_of_offense) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = name_of_borough, y = count, color = level_of_offense, fill = level_of_offense)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Borough",
+    y = "Count",
+    title = "Count of offense events in each borough"
+  ) +
+  theme(
+      axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 0.5),
+      legend.position = "none")
+
+
+offense_age = 
+  level_of_offense_df %>%
+  group_by(susp_age_group, level_of_offense) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = susp_age_group, y = count, color = level_of_offense, fill = level_of_offense)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Age group",
+    y = "Count",
+    title = "Count of offense events for each age group"
+  )
+
+
+offense_race = 
+  level_of_offense_df %>%
+  group_by(susp_race, level_of_offense) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = susp_race, y = count, color = level_of_offense, fill = level_of_offense)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Race",
+    y = "Count",
+    title = "Count of offense events by race"
+  ) +
+  theme(
+      axis.text.x = element_text(angle = 270, vjust = 0.5, hjust = 0.5),
+      legend.position = "none")
+
+
+offense_sex = 
+  level_of_offense_df %>%
+  group_by(susp_sex, level_of_offense) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = susp_sex, y = count, color = level_of_offense, fill = level_of_offense)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Sex",
+    y = "Count",
+    title = "Count of offense events by sex"
+  )
+```
+
+
+#### Borough
+```{r}
+offense_borough
+```
+
+
+#### Age
+```{r}
+offense_age
+```
+
+
+#### Race
+```{r}
+offense_race
+```
+
+
+#### Sex
+```{r}
+offense_sex
+```

@@ -1,0 +1,36 @@
+name: "site"
+output_dir: "."
+navbar:
+  title: "Home"
+  left:
+    - text: 'Data'
+      href: Data-resources.html
+    - text: 'Data Analysis'
+      menu:
+        - text: 'Analysis'
+          href: Hypothesis-Test.html
+        - text: 'Regression'
+          href: Regression-Analysis.html
+    - text: 'Visualization'
+      href: Plot.html
+    - text: "Map"
+      href: map.html
+  right:
+    - text: "Project Report"
+      href: about.html
+    - icon: fa-envelope fa-lg
+      href: mailto:<wz2591@cumc.columbia.edu>
+    - icon: fa-github fa-lg
+      href: https://github.com/WenyuZhang77/Risky_NYC
+    - icon: fa-ambulance fa-lg
+      href: https://nypdonline.org/link/1017
+output:
+  html_document:
+    code_folding: hide
+    theme: flatly
+    toc : true
+    toc_float: true
+
+    
+
+  
